@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Color Interpolation Visualizer</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: white;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+    }
+
+    .bar-container {
+      position: relative;
+      width: 900px;
+      height: 10px;
+      background: black;
+      margin: 40px auto;
+    }
+
+    .circle {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      border: 2px solid black;
+    }
+
+    .rgb-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 20px;
+    }
+
+    .rgb-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .rgb-group input {
+      width: 50px;
+      margin: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>RGB Color Interpolation</h2>
+
+  <div class="rgb-inputs">
+    <div class="rgb-group">
+      <strong>Left Color (RGB)</strong>
+      <input type="number" id="r1" value="0" min="0" max="255">
+      <input type="number" id="g1" value="255" min="0" max="255">
+      <input type="number" id="b1" value="0" min="0" max="255">
+    </div>
+    <div class="rgb-group">
+      <strong>Right Color (RGB)</strong>
+      <input type="number" id="r2" value="255" min="0" max="255">
+      <input type="number" id="g2" value="0" min="0" max="255">
+      <input type="number" id="b2" value="0" min="0" max="255">
+    </div>
+  </div>
+
+  <button onclick="applyColors()">Apply Colors</button>
+
+  <div id="bar" class="bar-container"></div>
+
+  <script>
+    const bar = document.getElementById('bar');
+    const r1 = document.getElementById('r1'), g1 = document.getElementById('g1'), b1 = document.getElementById('b1');
+    const r2 = document.getElementById('r2'), g2 = document.getElementById('g2'), b2 = document.getElementById('b2');
+
+    const leftPos = 100;
+    const rightPos = 800;
+
+    let leftCircle, rightCircle, centerCircle;
+    let leftColor = [0, 255, 0];
+    let rightColor = [255, 0, 0];
+
+    function interpolateColor(t) {
+      const r = Math.round(leftColor[0] + t * (rightColor[0] - leftColor[0]));
+      const g = Math.round(leftColor[1] + t * (rightColor[1] - leftColor[1]));
+      const b = Math.round(leftColor[2] + t * (rightColor[2] - leftColor[2]));
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    function applyColors() {
+      // Read RGB input values
+      leftColor = [parseInt(r1.value), parseInt(g1.value), parseInt(b1.value)];
+      rightColor = [parseInt(r2.value), parseInt(g2.value), parseInt(b2.value)];
+
+      render();
+    }
+
+    function render() {
+      bar.innerHTML = '';
+
+      // Create left circle
+      leftCircle = document.createElement('div');
+      leftCircle.className = 'circle';
+      leftCircle.style.backgroundColor = `rgb(${leftColor.join(',')})`;
+      leftCircle.style.left = `${leftPos}px`;
+      bar.appendChild(leftCircle);
+
+      // Create right circle
+      rightCircle = document.createElement('div');
+      rightCircle.className = 'circle';
+      rightCircle.style.backgroundColor = `rgb(${rightColor.join(',')})`;
+      rightCircle.style.left = `${rightPos}px`;
+      bar.appendChild(rightCircle);
+
+      // Create center draggable circle
+      centerCircle = document.createElement('div');
+      centerCircle.className = 'circle';
+      centerCircle.style.left = `${(leftPos + rightPos) / 2}px`;
+      bar.appendChild(centerCircle);
+
+      makeDraggable(centerCircle, leftPos, rightPos);
+    }
+
+    function makeDraggable(elem, minX, maxX) {
+      let dragging = false;
+
+      const onMouseMove = (e) => {
+        if (!dragging) return;
+        let x = e.clientX - bar.getBoundingClientRect().left;
+        x = Math.max(minX, Math.min(x, maxX));
+        elem.style.left = `${x}px`;
+
+        // Interpolate based on position
+        const t = (x - minX) / (maxX - minX);
+        elem.style.backgroundColor = interpolateColor(t);
+      };
+
+      elem.addEventListener('mousedown', () => dragging = true);
+      document.addEventListener('mouseup', () => dragging = false);
+      document.addEventListener('mousemove', onMouseMove);
+
+      // Initial color
+      const t = (parseInt(elem.style.left) - minX) / (maxX - minX);
+      elem.style.backgroundColor = interpolateColor(t);
+    }
+
+    // Initialize on load
+    applyColors();
+  </script>
+
+</body>
+</html>
